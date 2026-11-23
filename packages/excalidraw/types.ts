@@ -365,8 +365,10 @@ export interface AppState {
    * `bindingPreference` and keyboard modifiers (ctrl/alt)
    */
   isBindingEnabled: boolean;
-  /** user box selection preference; defaults to "contain" when unset */
+  /** User marquee selection preference, defaults to "overlap". */
   boxSelectionMode: BoxSelectionMode;
+  /** User lasso selection preference, defaults to "contain". */
+  lassoSelectionMode: BoxSelectionMode;
   /** user arrow binding preference */
   bindingPreference: "enabled" | "disabled";
   /** user preference whether arrow snap to midpoints while binding */

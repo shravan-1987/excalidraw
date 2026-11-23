@@ -67,7 +67,7 @@ import {
 
 import "./DefaultItems.scss";
 
-import type { InputDevice } from "../../types";
+import type { BoxSelectionMode, InputDevice } from "../../types";
 
 export const LoadScene = () => {
   const { t } = useI18n();
@@ -451,15 +451,21 @@ const PreferencesBoxSelectionModeItem = () => {
   const appState = useUIAppState();
   const setAppState = useExcalidrawSetAppState();
 
+  const selectionTool =
+    appState.activeTool.type === "selection" ||
+    appState.activeTool.type === "lasso"
+      ? appState.activeTool.type
+      : appState.preferredSelectionTool.type;
+  const modeKey =
+    selectionTool === "lasso" ? "lassoSelectionMode" : "boxSelectionMode";
+
   return (
-    <DropdownMenuItemContentRadio<"contain" | "overlap">
-      name="boxSelectionMode"
+    <DropdownMenuItemContentRadio<BoxSelectionMode>
+      name={modeKey}
       icon={emptyIcon}
-      value={appState.boxSelectionMode}
+      value={appState[modeKey]}
       onChange={(value) => {
-        setAppState({
-          boxSelectionMode: value,
-        });
+        setAppState({ [modeKey]: value });
       }}
       choices={[
         {

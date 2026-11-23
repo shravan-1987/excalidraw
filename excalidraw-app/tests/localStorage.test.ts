@@ -1,7 +1,7 @@
 import { STORAGE_KEYS } from "../app_constants";
 import { importFromLocalStorage } from "../data/localStorage";
 
-describe("browser box selection preferences", () => {
+describe("browser selection preferences", () => {
   afterEach(() =>
     localStorage.removeItem(STORAGE_KEYS.LOCAL_STORAGE_APP_STATE),
   );
@@ -16,6 +16,24 @@ describe("browser box selection preferences", () => {
       STORAGE_KEYS.LOCAL_STORAGE_APP_STATE,
       JSON.stringify(stored),
     );
-    expect(importFromLocalStorage().appState?.boxSelectionMode).toBe(expected);
+    expect(importFromLocalStorage().appState).toMatchObject({
+      boxSelectionMode: expected,
+      lassoSelectionMode: "contain",
+    });
+  });
+
+  it("restores an explicit lasso preference independently of the marquee", () => {
+    localStorage.setItem(
+      STORAGE_KEYS.LOCAL_STORAGE_APP_STATE,
+      JSON.stringify({
+        boxSelectionModeVersion: 1,
+        boxSelectionMode: "contain",
+        lassoSelectionMode: "overlap",
+      }),
+    );
+    expect(importFromLocalStorage().appState).toMatchObject({
+      boxSelectionMode: "contain",
+      lassoSelectionMode: "overlap",
+    });
   });
 });

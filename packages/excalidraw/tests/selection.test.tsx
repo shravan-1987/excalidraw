@@ -158,11 +158,7 @@ describe("box-selection", () => {
 
 describe("lasso reselection", () => {
   beforeEach(async () => {
-    await render(
-      <Excalidraw
-        initialData={{ appState: { boxSelectionMode: "contain" } }}
-      />,
-    );
+    await render(<Excalidraw />);
   });
 
   it("should allow ctrl+alt lasso reselection when starting inside the active common bounds", () => {
@@ -192,7 +188,7 @@ describe("lasso reselection", () => {
     });
 
     // NOTE: the lasso starts inside the common bounds of the selection, and
-    // encloses rectA only (the box selection mode being "contain")
+    // encloses rectA only (the lasso selection mode defaults to "contain")
     Keyboard.withModifierKeys({ ctrl: true, alt: true }, () => {
       mouse.downAt(110, 50);
       mouse.moveTo(110, -50);
