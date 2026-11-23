@@ -133,7 +133,8 @@ describe("box-selection", () => {
     assertSelectedElements([]);
   });
 
-  it("should not select an element when the selection box only partially overlaps it", () => {
+  it("should not select an element when the selection box only partially overlaps it in contain mode", () => {
+    act(() => h.app.setState({ boxSelectionMode: "contain" }));
     const rect1 = API.createElement({
       type: "rectangle",
       x: 0,
@@ -158,7 +159,9 @@ describe("box-selection", () => {
 describe("lasso reselection", () => {
   beforeEach(async () => {
     await render(
-      <Excalidraw initialData={{ appState: { boxSelectionMode: "contain" } }} />,
+      <Excalidraw
+        initialData={{ appState: { boxSelectionMode: "contain" } }}
+      />,
     );
   });
 
@@ -476,16 +479,20 @@ describe("box-selection overlap mode", () => {
     ["diamond", 80],
     ["ellipse", 80],
     ["ellipse", 50],
-  ] as const)("selects a partially crossed %s of width %i by default", (type, width) => {
-    const shape = API.createElement({ type, x: 0, y: 0, width, height: 50 });
-    API.setElements([shape]);
+  ] as const)(
+    "selects a partially crossed %s of width %i by default",
+    (type, width) => {
+      const shape = API.createElement({ type, x: 0, y: 0, width, height: 50 });
+      API.setElements([shape]);
 
-    mouse.downAt(-30, 15);
-    mouse.moveTo(15, 35);
-    assertSelectedElements([shape.id]);
-    mouse.up();
-    assertSelectedElements([shape.id]);
-  });
+      mouse.downAt(-30, 15);
+      mouse.move(-1000, -1000);
+      mouse.moveTo(15, 35);
+      assertSelectedElements([shape.id]);
+      mouse.up();
+      assertSelectedElements([shape.id]);
+    },
+  );
 
   it("requires full enclosure in explicit contain mode", () => {
     act(() => h.app.setState({ boxSelectionMode: "contain" }));
@@ -1073,7 +1080,9 @@ describe("box-selection overlap mode", () => {
 describe("inner box-selection", () => {
   beforeEach(async () => {
     await render(
-      <Excalidraw initialData={{ appState: { boxSelectionMode: "contain" } }} />,
+      <Excalidraw
+        initialData={{ appState: { boxSelectionMode: "contain" } }}
+      />,
     );
   });
   it("selecting elements visually nested inside another", async () => {

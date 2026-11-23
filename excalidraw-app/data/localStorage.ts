@@ -59,11 +59,19 @@ export const importFromLocalStorage = () => {
   let appState = null;
   if (savedState) {
     try {
+      const stored = JSON.parse(savedState) as Partial<AppState> & {
+        boxSelectionModeVersion?: number;
+      };
+      // Older browser saves persisted "contain" even without a user choice.
+      if (
+        !stored.boxSelectionModeVersion &&
+        stored.boxSelectionMode === "contain"
+      ) {
+        delete stored.boxSelectionMode;
+      }
       appState = {
         ...getDefaultAppState(),
-        ...clearAppStateForLocalStorage(
-          JSON.parse(savedState) as Partial<AppState>,
-        ),
+        ...clearAppStateForLocalStorage(stored),
       };
     } catch (error: any) {
       console.error(error);

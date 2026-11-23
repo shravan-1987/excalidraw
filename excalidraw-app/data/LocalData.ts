@@ -93,7 +93,7 @@ const saveDataStateToLocalStorage = (
     );
     localStorage.setItem(
       STORAGE_KEYS.LOCAL_STORAGE_APP_STATE,
-      JSON.stringify(_appState),
+      JSON.stringify({ ..._appState, boxSelectionModeVersion: 1 }),
     );
     updateBrowserStateVersion(STORAGE_KEYS.VERSION_DATA_STATE);
     if (localStorageQuotaExceeded) {

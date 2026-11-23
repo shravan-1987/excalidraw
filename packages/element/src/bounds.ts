@@ -1629,12 +1629,13 @@ export const elementsOverlappingBBox = <T extends ExcalidrawElement>({
     // Clip element bounds by its containing frame (if any), since only the
     // visible (frame-clipped) portion of the element is relevant for selection.
     const associatedFrame = getContainingFrame(element, elementsMap);
+    let frameAABB: Bounds | undefined;
     if (
       associatedFrame &&
       isFrameClippable(element, elementsMap) &&
       elementOverlapsWithFrame(element, associatedFrame, elementsMap)
     ) {
-      const frameAABB = getElementBounds(associatedFrame, elementsMap);
+      frameAABB = getElementBounds(associatedFrame, elementsMap);
       elementAABB = [
         Math.max(elementAABB[0], frameAABB[0]),
         Math.max(elementAABB[1], frameAABB[1]),
@@ -1689,6 +1690,8 @@ export const elementsOverlappingBBox = <T extends ExcalidrawElement>({
     // 3. Handle the case where the selection is not wrapping the element, but
     //    it does intersect the element's outline (non-AABB).
     if (type === "overlap" && doBoundsIntersect(selectionBounds, elementAABB)) {
+      const isVisible = (point: GlobalPoint) =>
+        !frameAABB || pointInsideBoundsInclusive(point, frameAABB);
       let hasIntersection = false;
 
       // Preliminary check potential intersection imprecision
@@ -1701,7 +1704,10 @@ export const elementsOverlappingBBox = <T extends ExcalidrawElement>({
             element.angle,
           );
 
-          return pointInsideBounds(rotatedPoint, selectionBounds);
+          return (
+            pointInsideBounds(rotatedPoint, selectionBounds) &&
+            isVisible(rotatedPoint)
+          );
         });
       } else {
         const nonRotatedElementBounds = getElementBounds(
@@ -1743,19 +1749,21 @@ export const elementsOverlappingBBox = <T extends ExcalidrawElement>({
             center,
             element.angle,
           ),
-        ].some((point) => pointInsideBounds(point, selectionBounds));
+        ].some(
+          (point) =>
+            pointInsideBounds(point, selectionBounds) && isVisible(point),
+        );
       }
 
       if (!hasIntersection) {
-        hasIntersection = selectionEdges.some(
-          (selectionEdge) =>
-            intersectElementWithLineSegment(
-              element,
-              elementsMap,
-              selectionEdge,
-              strokeWidth / 2,
-              true, // Stop at first hit for better performance
-            ).length > 0,
+        hasIntersection = selectionEdges.some((selectionEdge) =>
+          intersectElementWithLineSegment(
+            element,
+            elementsMap,
+            selectionEdge,
+            strokeWidth / 2,
+            !frameAABB, // A framed element may have a hidden first hit.
+          ).some(isVisible),
         );
       }
 

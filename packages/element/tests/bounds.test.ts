@@ -185,19 +185,47 @@ describe("elementsOverlappingBBox()", () => {
         type,
         x: 0,
         y: 0,
-        width: 100,
+        width: 200,
         height: 40,
         angle: degreesToRadians(45),
       });
       const overlaps = (bounds: Bounds) =>
         elementsOverlappingBBox({ bounds, type: "overlap", elements: [shape] });
 
-      // The top midpoint (50, 0) rotates around (50, 20) to roughly (64, 6).
-      expect(overlaps(makeBBox(63, 5, 65, 7))).toEqual([shape]);
-      // A second 45-degree turn puts that midpoint at (70, 20).
-      expect(overlaps(makeBBox(69, 19, 71, 21))).toEqual([]);
+      // The top midpoint (100, 0) rotates around (100, 20) to roughly (114, 6).
+      expect(overlaps(makeBBox(113, 5, 115, 7))).toEqual([shape]);
+      // A second 45-degree turn puts that midpoint at (120, 20).
+      expect(overlaps(makeBBox(119, 19, 121, 21))).toEqual([]);
     },
   );
+
+  it("only counts outline hits on the visible part of a framed child", () => {
+    const frame = API.createElement({
+      type: "frame",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+    });
+    const child = API.createElement({
+      type: "rectangle",
+      x: 50,
+      y: 10,
+      width: 100,
+      height: 80,
+      frameId: frame.id,
+    });
+    const overlaps = (bounds: Bounds) =>
+      elementsOverlappingBBox({
+        elements: [child],
+        elementsMap: arrayToMap([frame, child]),
+        bounds,
+        type: "overlap",
+      });
+    expect(overlaps(makeBBox(90, 40, 155, 60))).toEqual([]);
+    expect(overlaps(makeBBox(90, 15, 155, 25))).toEqual([]);
+    expect(overlaps(makeBBox(45, 40, 60, 60))).toEqual([child]);
+  });
 
   it("should return elements that overlap bbox", () => {
     const bbox = makeBBox(0, 0, 100, 100);

@@ -1305,12 +1305,6 @@ export const restoreAppState = (
         : defaultValue;
   }
 
-  const boxSelectionMode =
-    appState.boxSelectionMode ?? localAppState?.boxSelectionMode;
-  if (boxSelectionMode !== undefined) {
-    nextAppState.boxSelectionMode = boxSelectionMode;
-  }
-
   // drop malformed persisted custom top picks (imported data is untrusted)
   nextAppState.colorTopPicks = {
     elementStroke: restoreColorTopPicksList(
