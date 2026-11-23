@@ -1768,11 +1768,15 @@ export const elementsOverlappingBBox = <T extends ExcalidrawElement>({
   }
 
   if (type === "overlap") {
+    const expandedGroups = new Set<string>();
     Array.from(elementsInSelection).forEach((element) => {
       const groupId = element.groupIds.at(-1);
-      const group = groupId ? groups[groupId] : null;
-
-      group?.forEach((groupElement) => elementsInSelection.add(groupElement));
+      if (groupId && !expandedGroups.has(groupId)) {
+        expandedGroups.add(groupId);
+        groups[groupId]?.forEach((groupElement) =>
+          elementsInSelection.add(groupElement),
+        );
+      }
     });
   } else if (type === "contain") {
     elementsInSelection.forEach((element) => {

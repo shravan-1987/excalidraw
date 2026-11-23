@@ -233,7 +233,7 @@ describe("elementsOverlappingBBox()", () => {
   it.each(["toString", "valueOf", "constructor", "__proto__"])(
     "handles a group with the ID %s",
     (groupId) => {
-      const elements = [10, 110].map((x) =>
+      const elements = [10, 110, 25].map((x) =>
         API.createElement({
           type: "rectangle",
           x,
