@@ -15,7 +15,15 @@ import {
   DEFAULT_STICKY_NOTE_BG,
 } from "@excalidraw/common";
 
-import type { AppState, InputDevice, NormalizedZoomValue } from "./types";
+import type {
+  AppState,
+  BoxSelectionMode,
+  InputDevice,
+  NormalizedZoomValue,
+} from "./types";
+
+export const isSelectionMode = (value: unknown): value is BoxSelectionMode =>
+  value === "contain" || value === "overlap";
 
 /**
  * Resolved lazily rather than at module scope: this module is pulled in by the

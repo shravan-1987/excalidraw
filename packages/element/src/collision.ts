@@ -507,8 +507,23 @@ export const getHoveredElementForBinding = (
     : candidate.element;
 };
 
+type FirstIntersection = boolean | ((point: GlobalPoint) => boolean);
+
+const addIntersection = (
+  intersections: GlobalPoint[],
+  point: GlobalPoint,
+  onlyFirst: FirstIntersection,
+) => {
+  if (typeof onlyFirst === "function" && !onlyFirst(point)) {
+    return false;
+  }
+  intersections.push(point);
+  return Boolean(onlyFirst);
+};
+
 /**
- * Intersect a line with an element for binding test
+ * Intersect a line with an element.
+ * Pass a predicate to stop at the first intersection it accepts.
  *
  * @param element
  * @param line
@@ -520,7 +535,7 @@ export const intersectElementWithLineSegment = (
   elementsMap: ElementsMap,
   line: LineSegment<GlobalPoint>,
   offset: number = 0,
-  onlyFirst = false,
+  onlyFirst: FirstIntersection = false,
 ): GlobalPoint[] => {
   // First check if the line intersects the element's axis-aligned bounding box
   // as it is much faster than checking intersection against the element's shape
@@ -568,6 +583,7 @@ export const intersectElementWithLineSegment = (
         elementsMap,
         line,
         offset,
+        onlyFirst,
       );
     case "line":
     case "freedraw":
@@ -589,7 +605,7 @@ const curveIntersections = (
   intersections: GlobalPoint[],
   center: GlobalPoint,
   angle: Radians,
-  onlyFirst = false,
+  onlyFirst: FirstIntersection = false,
 ) => {
   // Pad the segment bounds so an axis-aligned segment passing exactly through
   // the joint of two curves still overlaps their bounds, as
@@ -609,14 +625,14 @@ const curveIntersections = (
       continue;
     }
 
-    const hits = curveIntersectLineSegment(c, segment);
-
-    if (hits.length > 0) {
-      for (const j of hits) {
-        intersections.push(pointRotateRads(j, center, angle));
-      }
-
-      if (onlyFirst) {
+    for (const hit of curveIntersectLineSegment(c, segment)) {
+      if (
+        addIntersection(
+          intersections,
+          pointRotateRads(hit, center, angle),
+          onlyFirst,
+        )
+      ) {
         return intersections;
       }
     }
@@ -631,16 +647,19 @@ const lineIntersections = (
   intersections: GlobalPoint[],
   center: GlobalPoint,
   angle: Radians,
-  onlyFirst = false,
+  onlyFirst: FirstIntersection = false,
 ) => {
   for (const l of lines) {
     const intersection = lineSegmentIntersectionPoints(l, segment);
-    if (intersection) {
-      intersections.push(pointRotateRads(intersection, center, angle));
-
-      if (onlyFirst) {
-        return intersections;
-      }
+    if (
+      intersection &&
+      addIntersection(
+        intersections,
+        pointRotateRads(intersection, center, angle),
+        onlyFirst,
+      )
+    ) {
+      return intersections;
     }
   }
 
@@ -651,7 +670,7 @@ const intersectLinearOrFreeDrawWithLineSegment = (
   element: ExcalidrawLinearElement | ExcalidrawFreeDrawElement,
   segment: LineSegment<GlobalPoint>,
   elementsMap: ElementsMap,
-  onlyFirst = false,
+  onlyFirst: FirstIntersection = false,
 ): GlobalPoint[] => {
   // NOTE: This is the only one which return the decomposed elements
   // rotated! This is due to taking advantage of roughjs definitions.
@@ -663,12 +682,11 @@ const intersectLinearOrFreeDrawWithLineSegment = (
 
   for (const l of lines) {
     const intersection = lineSegmentIntersectionPoints(l, segment);
-    if (intersection) {
-      intersections.push(intersection);
-
-      if (onlyFirst) {
-        return intersections;
-      }
+    if (
+      intersection &&
+      addIntersection(intersections, intersection, onlyFirst)
+    ) {
+      return intersections;
     }
   }
 
@@ -690,10 +708,8 @@ const intersectLinearOrFreeDrawWithLineSegment = (
       iterLimit: 10,
     });
 
-    if (hits.length > 0) {
-      intersections.push(...hits);
-
-      if (onlyFirst) {
+    for (const hit of hits) {
+      if (addIntersection(intersections, hit, onlyFirst)) {
         return intersections;
       }
     }
@@ -707,7 +723,7 @@ const intersectRectanguloidWithLineSegment = (
   elementsMap: ElementsMap,
   segment: LineSegment<GlobalPoint>,
   offset: number = 0,
-  onlyFirst = false,
+  onlyFirst: FirstIntersection = false,
 ): GlobalPoint[] => {
   const center = elementCenterPoint(element, elementsMap);
   // To emulate a rotated rectangle we rotate the point in the inverse angle
@@ -766,7 +782,7 @@ const intersectDiamondWithLineSegment = (
   elementsMap: ElementsMap,
   l: LineSegment<GlobalPoint>,
   offset: number = 0,
-  onlyFirst = false,
+  onlyFirst: FirstIntersection = false,
 ): GlobalPoint[] => {
   const center = elementCenterPoint(element, elementsMap);
 
@@ -816,16 +832,30 @@ const intersectEllipseWithLineSegment = (
   elementsMap: ElementsMap,
   l: LineSegment<GlobalPoint>,
   offset: number = 0,
+  onlyFirst: FirstIntersection = false,
 ): GlobalPoint[] => {
   const center = elementCenterPoint(element, elementsMap);
 
   const rotatedA = pointRotateRads(l[0], center, -element.angle as Radians);
   const rotatedB = pointRotateRads(l[1], center, -element.angle as Radians);
 
-  return ellipseSegmentInterceptPoints(
+  const hits = ellipseSegmentInterceptPoints(
     ellipse(center, element.width / 2 + offset, element.height / 2 + offset),
     lineSegment(rotatedA, rotatedB),
-  ).map((p) => pointRotateRads(p, center, element.angle));
+  );
+  const intersections: GlobalPoint[] = [];
+  for (const hit of hits) {
+    if (
+      addIntersection(
+        intersections,
+        pointRotateRads(hit, center, element.angle),
+        onlyFirst,
+      )
+    ) {
+      break;
+    }
+  }
+  return intersections;
 };
 
 /**

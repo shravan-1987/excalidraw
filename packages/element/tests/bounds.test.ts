@@ -225,7 +225,34 @@ describe("elementsOverlappingBBox()", () => {
     expect(overlaps(makeBBox(90, 40, 155, 60))).toEqual([]);
     expect(overlaps(makeBBox(90, 15, 155, 25))).toEqual([]);
     expect(overlaps(makeBBox(45, 40, 60, 60))).toEqual([child]);
+    // No outline midpoint is inside this box. Its top edge hits the hidden
+    // right edge of the child before hitting the visible left edge.
+    expect(overlaps(makeBBox(45, 20, 155, 30))).toEqual([child]);
   });
+
+  it.each(["toString", "valueOf", "constructor", "__proto__"])(
+    "handles a group with the ID %s",
+    (groupId) => {
+      const elements = [10, 110].map((x) =>
+        API.createElement({
+          type: "rectangle",
+          x,
+          y: 10,
+          width: 20,
+          height: 20,
+          groupIds: [groupId],
+        }),
+      );
+      const bounds = makeBBox(0, 0, 50, 50);
+
+      expect(
+        elementsOverlappingBBox({ elements, bounds, type: "overlap" }),
+      ).toEqual(elements);
+      expect(
+        elementsOverlappingBBox({ elements, bounds, type: "contain" }),
+      ).toEqual([]);
+    },
+  );
 
   it("should return elements that overlap bbox", () => {
     const bbox = makeBBox(0, 0, 100, 100);

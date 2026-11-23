@@ -914,6 +914,36 @@ describe("ellipse outline hit test", () => {
 });
 
 describe("intersectElementWithLineSegment", () => {
+  it("stops at the first accepted hit", () => {
+    const rectangle = API.createElement({
+      type: "rectangle",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+    });
+    const elementsMap = arrayToMap([rectangle]);
+    const segment = lineSegment(
+      pointFrom<GlobalPoint>(-10, 50),
+      pointFrom<GlobalPoint>(110, 50),
+    );
+    const hits: GlobalPoint[] = [];
+
+    const accepted = intersectElementWithLineSegment(
+      rectangle,
+      elementsMap,
+      segment,
+      0,
+      (point) => {
+        hits.push(point);
+        return true;
+      },
+    );
+
+    expect(hits).toHaveLength(1);
+    expect(accepted).toEqual(hits);
+  });
+
   it("hits a rounded diamond corner along a line through its apex", () => {
     const diamond = API.createElement({
       type: "diamond",

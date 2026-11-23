@@ -1034,6 +1034,27 @@ describe("restoreElements", () => {
 });
 
 describe("restoreAppState", () => {
+  it("defaults malformed selection modes supplied by the scene or local state", () => {
+    const invalidModes = {
+      boxSelectionMode: ["contain"],
+      lassoSelectionMode: null,
+    } as unknown as ImportedDataState["appState"];
+    const localModes = {
+      boxSelectionMode: "contain",
+      lassoSelectionMode: "overlap",
+    } as const;
+    const defaults = {
+      boxSelectionMode: "overlap",
+      lassoSelectionMode: "contain",
+    };
+
+    expect(restore.restoreAppState(invalidModes, localModes)).toMatchObject(
+      defaults,
+    );
+    expect(restore.restoreAppState(null, invalidModes)).toMatchObject(defaults);
+    expect(restore.restoreAppState({}, localModes)).toMatchObject(localModes);
+  });
+
   it("should restore freedraw mode app state values", () => {
     expect(
       restore.restoreAppState(

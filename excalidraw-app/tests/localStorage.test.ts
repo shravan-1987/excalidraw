@@ -39,6 +39,52 @@ describe("browser selection preferences", () => {
     },
   );
 
+  it.each([[null], [[]], [false], [42], ["selection"]])(
+    "ignores non-object browser state %j",
+    (stored) => {
+      localStorage.setItem(
+        STORAGE_KEYS.LOCAL_STORAGE_APP_STATE,
+        JSON.stringify(stored),
+      );
+      expect(importFromLocalStorage().appState).toBeNull();
+    },
+  );
+
+  it.each([null, "1", 0, 2])(
+    "ignores selection modes with version %j",
+    (version) => {
+      localStorage.setItem(
+        STORAGE_KEYS.LOCAL_STORAGE_APP_STATE,
+        JSON.stringify({
+          name: "Saved drawing",
+          boxSelectionModeVersion: version,
+          boxSelectionMode: "contain",
+          lassoSelectionMode: "overlap",
+        }),
+      );
+      expect(importFromLocalStorage().appState).toMatchObject({
+        name: "Saved drawing",
+        boxSelectionMode: "overlap",
+        lassoSelectionMode: "contain",
+      });
+    },
+  );
+
+  it("defaults invalid modes in a supported save", () => {
+    localStorage.setItem(
+      STORAGE_KEYS.LOCAL_STORAGE_APP_STATE,
+      JSON.stringify({
+        boxSelectionModeVersion: 1,
+        boxSelectionMode: ["contain"],
+        lassoSelectionMode: "invalid",
+      }),
+    );
+    expect(importFromLocalStorage().appState).toMatchObject({
+      boxSelectionMode: "overlap",
+      lassoSelectionMode: "contain",
+    });
+  });
+
   it("restores an explicit lasso preference independently of the marquee", () => {
     localStorage.setItem(
       STORAGE_KEYS.LOCAL_STORAGE_APP_STATE,

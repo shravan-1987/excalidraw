@@ -1,8 +1,10 @@
 import {
   clearAppStateForLocalStorage,
   getDefaultAppState,
+  isSelectionMode,
 } from "@excalidraw/excalidraw/appState";
 
+import type { Merge } from "@excalidraw/common/utility-types";
 import type { ExcalidrawElement } from "@excalidraw/element/types";
 import type { AppState } from "@excalidraw/excalidraw/types";
 
@@ -59,24 +61,47 @@ export const importFromLocalStorage = () => {
   let appState = null;
   if (savedState) {
     try {
-      const stored = JSON.parse(savedState) as Partial<AppState> & {
-        boxSelectionModeVersion?: number;
-      };
-      if (!stored.boxSelectionModeVersion) {
-        // Legacy saves used a shared setting and persisted "contain" by default.
-        if (stored.boxSelectionMode === "contain") {
-          delete stored.boxSelectionMode;
-        } else if (
-          stored.boxSelectionMode === "overlap" &&
-          stored.lassoSelectionMode === undefined
-        ) {
-          stored.lassoSelectionMode = "overlap";
-        }
+      const parsed: unknown = JSON.parse(savedState);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return { elements, appState };
       }
+
+      const {
+        boxSelectionModeVersion,
+        boxSelectionMode,
+        lassoSelectionMode,
+        ...stored
+      } = parsed as Merge<
+        Partial<AppState>,
+        {
+          boxSelectionModeVersion?: unknown;
+          boxSelectionMode?: unknown;
+          lassoSelectionMode?: unknown;
+        }
+      >;
+      const isLegacy = boxSelectionModeVersion === undefined;
+      const isCurrentVersion = boxSelectionModeVersion === 1;
       appState = {
         ...getDefaultAppState(),
         ...clearAppStateForLocalStorage(stored),
       };
+
+      if (isCurrentVersion && isSelectionMode(boxSelectionMode)) {
+        appState.boxSelectionMode = boxSelectionMode;
+      }
+      if (
+        (isCurrentVersion || isLegacy) &&
+        isSelectionMode(lassoSelectionMode)
+      ) {
+        appState.lassoSelectionMode = lassoSelectionMode;
+      } else if (
+        isLegacy &&
+        boxSelectionMode === "overlap" &&
+        lassoSelectionMode === undefined
+      ) {
+        // In legacy saves, overlap was an explicit choice for both tools.
+        appState.lassoSelectionMode = boxSelectionMode;
+      }
     } catch (error: any) {
       console.error(error);
       // Do nothing because appState is already null

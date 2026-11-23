@@ -107,7 +107,7 @@ import type {
 
 import type { MarkOptional, Mutable } from "@excalidraw/common/utility-types";
 
-import { getDefaultAppState } from "../appState";
+import { getDefaultAppState, isSelectionMode } from "../appState";
 
 import {
   getNormalizedGridSize,
@@ -1303,6 +1303,13 @@ export const restoreAppState = (
         : localValue !== undefined
         ? localValue
         : defaultValue;
+  }
+
+  if (!isSelectionMode(nextAppState.boxSelectionMode)) {
+    nextAppState.boxSelectionMode = defaultAppState.boxSelectionMode;
+  }
+  if (!isSelectionMode(nextAppState.lassoSelectionMode)) {
+    nextAppState.lassoSelectionMode = defaultAppState.lassoSelectionMode;
   }
 
   // drop malformed persisted custom top picks (imported data is untrusted)

@@ -1580,7 +1580,7 @@ export const elementsOverlappingBBox = <T extends ExcalidrawElement>({
   const framesInSelection = excludeElementsInFrames
     ? new Set<ExcalidrawElement["id"]>()
     : null;
-  const groups: Record<string, T[]> = {};
+  const groups: Record<string, T[]> = Object.create(null);
   const elementsInSelection: Set<T> = new Set();
 
   for (const element of elements) {
@@ -1710,60 +1710,38 @@ export const elementsOverlappingBBox = <T extends ExcalidrawElement>({
           );
         });
       } else {
-        const nonRotatedElementBounds = getElementBounds(
+        const [left, top, right, bottom] = getElementBounds(
           element,
           elementsMap,
           true,
         );
         const center = elementCenterPoint(element, elementsMap);
+        const midX = (left + right) / 2;
+        const midY = (top + bottom) / 2;
         hasIntersection = [
-          pointRotateRads(
-            pointFrom<GlobalPoint>(
-              (nonRotatedElementBounds[0] + nonRotatedElementBounds[2]) / 2,
-              nonRotatedElementBounds[1],
-            ),
-            center,
-            element.angle,
-          ),
-          pointRotateRads(
-            pointFrom<GlobalPoint>(
-              nonRotatedElementBounds[2],
-              (nonRotatedElementBounds[1] + nonRotatedElementBounds[3]) / 2,
-            ),
-            center,
-            element.angle,
-          ),
-          pointRotateRads(
-            pointFrom<GlobalPoint>(
-              (nonRotatedElementBounds[0] + nonRotatedElementBounds[2]) / 2,
-              nonRotatedElementBounds[3],
-            ),
-            center,
-            element.angle,
-          ),
-          pointRotateRads(
-            pointFrom<GlobalPoint>(
-              nonRotatedElementBounds[0],
-              (nonRotatedElementBounds[1] + nonRotatedElementBounds[3]) / 2,
-            ),
-            center,
-            element.angle,
-          ),
-        ].some(
-          (point) =>
-            pointInsideBounds(point, selectionBounds) && isVisible(point),
-        );
+          pointFrom<GlobalPoint>(midX, top),
+          pointFrom<GlobalPoint>(right, midY),
+          pointFrom<GlobalPoint>(midX, bottom),
+          pointFrom<GlobalPoint>(left, midY),
+        ].some((point) => {
+          const rotatedPoint = pointRotateRads(point, center, element.angle);
+          return (
+            pointInsideBounds(rotatedPoint, selectionBounds) &&
+            isVisible(rotatedPoint)
+          );
+        });
       }
 
       if (!hasIntersection) {
-        hasIntersection = selectionEdges.some((selectionEdge) =>
-          intersectElementWithLineSegment(
-            element,
-            elementsMap,
-            selectionEdge,
-            strokeWidth / 2,
-            !frameAABB, // A framed element may have a hidden first hit.
-          ).some(isVisible),
+        hasIntersection = selectionEdges.some(
+          (selectionEdge) =>
+            intersectElementWithLineSegment(
+              element,
+              elementsMap,
+              selectionEdge,
+              strokeWidth / 2,
+              frameAABB ? isVisible : true,
+            ).length > 0,
         );
       }
 
