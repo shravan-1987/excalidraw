@@ -8,7 +8,7 @@ import {
 import { arrayToMap, type Bounds, ROUNDNESS } from "@excalidraw/common";
 import { API } from "@excalidraw/excalidraw/tests/helpers/api";
 
-import type { LocalPoint } from "@excalidraw/math";
+import type { Degrees, LocalPoint } from "@excalidraw/math";
 
 import {
   CARDINALITY_ONE_OR_MANY_BAR_OFFSET,
@@ -187,7 +187,7 @@ describe("elementsOverlappingBBox()", () => {
         y: 0,
         width: 200,
         height: 40,
-        angle: degreesToRadians(45),
+        angle: degreesToRadians(45 as Degrees),
       });
       const overlaps = (bounds: Bounds) =>
         elementsOverlappingBBox({ bounds, type: "overlap", elements: [shape] });

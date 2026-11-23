@@ -465,7 +465,11 @@ const PreferencesBoxSelectionModeItem = () => {
       icon={emptyIcon}
       value={appState[modeKey]}
       onChange={(value) => {
-        setAppState({ [modeKey]: value });
+        if (modeKey === "lassoSelectionMode") {
+          setAppState({ lassoSelectionMode: value });
+        } else {
+          setAppState({ boxSelectionMode: value });
+        }
       }}
       choices={[
         {
