@@ -62,12 +62,16 @@ export const importFromLocalStorage = () => {
       const stored = JSON.parse(savedState) as Partial<AppState> & {
         boxSelectionModeVersion?: number;
       };
-      // Older browser saves persisted "contain" even without a user choice.
-      if (
-        !stored.boxSelectionModeVersion &&
-        stored.boxSelectionMode === "contain"
-      ) {
-        delete stored.boxSelectionMode;
+      if (!stored.boxSelectionModeVersion) {
+        // Legacy saves used a shared setting and persisted "contain" by default.
+        if (stored.boxSelectionMode === "contain") {
+          delete stored.boxSelectionMode;
+        } else if (
+          stored.boxSelectionMode === "overlap" &&
+          stored.lassoSelectionMode === undefined
+        ) {
+          stored.lassoSelectionMode = "overlap";
+        }
       }
       appState = {
         ...getDefaultAppState(),
