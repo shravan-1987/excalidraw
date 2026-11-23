@@ -178,6 +178,27 @@ const makeBBox = (
 ): Bounds => [minX, minY, maxX, maxY];
 
 describe("elementsOverlappingBBox()", () => {
+  it.each(["rectangle", "diamond", "ellipse"] as const)(
+    "rotates the %s outline points exactly once",
+    (type) => {
+      const shape = API.createElement({
+        type,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 40,
+        angle: degreesToRadians(45),
+      });
+      const overlaps = (bounds: Bounds) =>
+        elementsOverlappingBBox({ bounds, type: "overlap", elements: [shape] });
+
+      // The top midpoint (50, 0) rotates around (50, 20) to roughly (64, 6).
+      expect(overlaps(makeBBox(63, 5, 65, 7))).toEqual([shape]);
+      // A second 45-degree turn puts that midpoint at (70, 20).
+      expect(overlaps(makeBBox(69, 19, 71, 21))).toEqual([]);
+    },
+  );
+
   it("should return elements that overlap bbox", () => {
     const bbox = makeBBox(0, 0, 100, 100);
 

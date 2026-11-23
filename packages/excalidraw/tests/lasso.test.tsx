@@ -40,7 +40,12 @@ const { h } = window;
 
 beforeEach(async () => {
   localStorage.clear();
-  await render(<Excalidraw handleKeyboardGlobally={true} />);
+  await render(
+    <Excalidraw
+      handleKeyboardGlobally={true}
+      initialData={{ appState: { boxSelectionMode: "contain" } }}
+    />,
+  );
   h.state.width = 1000;
   h.state.height = 1000;
 });

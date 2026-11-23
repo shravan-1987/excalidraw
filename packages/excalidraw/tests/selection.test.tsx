@@ -157,7 +157,9 @@ describe("box-selection", () => {
 
 describe("lasso reselection", () => {
   beforeEach(async () => {
-    await render(<Excalidraw />);
+    await render(
+      <Excalidraw initialData={{ appState: { boxSelectionMode: "contain" } }} />,
+    );
   });
 
   it("should allow ctrl+alt lasso reselection when starting inside the active common bounds", () => {
@@ -187,7 +189,7 @@ describe("lasso reselection", () => {
     });
 
     // NOTE: the lasso starts inside the common bounds of the selection, and
-    // encloses rectA only (the default box selection mode being "contain")
+    // encloses rectA only (the box selection mode being "contain")
     Keyboard.withModifierKeys({ ctrl: true, alt: true }, () => {
       mouse.downAt(110, 50);
       mouse.moveTo(110, -50);
@@ -466,11 +468,40 @@ describe("box-selection overlap mode", () => {
   };
 
   beforeEach(async () => {
-    await render(
-      <Excalidraw
-        initialData={{ appState: { boxSelectionMode: "overlap" } }}
-      />,
-    );
+    await render(<Excalidraw />);
+  });
+
+  it.each([
+    ["rectangle", 80],
+    ["diamond", 80],
+    ["ellipse", 80],
+    ["ellipse", 50],
+  ] as const)("selects a partially crossed %s of width %i by default", (type, width) => {
+    const shape = API.createElement({ type, x: 0, y: 0, width, height: 50 });
+    API.setElements([shape]);
+
+    mouse.downAt(-30, 15);
+    mouse.moveTo(15, 35);
+    assertSelectedElements([shape.id]);
+    mouse.up();
+    assertSelectedElements([shape.id]);
+  });
+
+  it("requires full enclosure in explicit contain mode", () => {
+    act(() => h.app.setState({ boxSelectionMode: "contain" }));
+    const shape = API.createElement({
+      type: "rectangle",
+      x: 0,
+      y: 0,
+      width: 80,
+      height: 50,
+    });
+    API.setElements([shape]);
+
+    boxSelect(-30, 15, 15, 35);
+    assertSelectedElements([]);
+    boxSelect(100, 70, -20, -20);
+    assertSelectedElements([shape.id]);
   });
 
   it("should select an element when the selection box partially overlaps it", () => {
@@ -1041,7 +1072,9 @@ describe("box-selection overlap mode", () => {
 
 describe("inner box-selection", () => {
   beforeEach(async () => {
-    await render(<Excalidraw />);
+    await render(
+      <Excalidraw initialData={{ appState: { boxSelectionMode: "contain" } }} />,
+    );
   });
   it("selecting elements visually nested inside another", async () => {
     const rect1 = API.createElement({
